@@ -21,7 +21,8 @@ class GUI(tk.Tk):
         b1 = tk.Button(self.f, text=u'こうげき', command=self.attack, bg='oldlace')
         b2 = tk.Button(self.f, text=u'じゅもん', command=self.spell, bg='oldlace')
         b3 = tk.Button(self.f, text=u'とくぎ', command=self.tokugi, bg='oldlace')
-        b4 = tk.Button(self.f, text=u'とまれ', command=self.stop, fg='red', bg='oldlace')
+        b4 = tk.Button(self.f, text=u'スロット', command=self.slot, bg='oldlace')
+        b5 = tk.Button(self.f, text=u'とまれ', command=self.stop, fg='red', bg='oldlace')
         c1 = tk.Checkbutton(self.f, text=u'フィールドでのループ有効', variable=self.gui_b_field, bg='white')
         c2 = tk.Checkbutton(self.f, text=u'戦闘開始時とくぎ', variable=self.gui_b_battle_ini, bg='white')
         c3 = tk.Checkbutton(self.f, text=u'戦闘終了時まんたん', variable=self.gui_b_battle_end, bg='white')
@@ -31,10 +32,11 @@ class GUI(tk.Tk):
         b2.grid(row=0, column=1)
         b3.grid(row=0, column=2)
         b4.grid(row=0, column=3)
-        c1.grid(row=1, column=0, columnspan=4, sticky=tk.W)
-        c2.grid(row=2, column=0, columnspan=4, sticky=tk.W)
-        c3.grid(row=3, column=0, columnspan=4, sticky=tk.W)
-        t1.grid(row=0, column=4, rowspan=4, sticky=tk.W, padx=2)
+        b5.grid(row=0, column=4)
+        c1.grid(row=1, column=0, columnspan=5, sticky=tk.W)
+        c2.grid(row=2, column=0, columnspan=5, sticky=tk.W)
+        c3.grid(row=3, column=0, columnspan=5, sticky=tk.W)
+        t1.grid(row=0, column=5, rowspan=5, sticky=tk.W, padx=2)
         self.queue = Queue.Queue()
         self.running = False
 
@@ -50,6 +52,9 @@ class GUI(tk.Tk):
     def mantan(self):
         self.start('mantan')
 
+    def slot(self):
+        self.start('slot')
+
     def stop(self):
         if self.running:
             self.thread.dqx.set_gui_b_loop(False)
@@ -58,7 +63,7 @@ class GUI(tk.Tk):
             print '\nGUI: Invalid Operation'
 
     def start(self, command):
-        if not self.running and command in ['attack', 'spell', 'tokugi']:
+        if not self.running and command in ['attack', 'spell', 'tokugi', 'slot']:
             print 'GUI: Started'
             self.running = True
             self.thread = ThreadedTask(self.queue, command,
@@ -96,10 +101,13 @@ class ThreadedTask(threading.Thread):
 
     def run(self):
         print 'GUI:', self.command, self.gui_b_field, self.gui_b_battle_ini, self.gui_b_battle_end
-        self.dqx.set_gui_b_field(self.gui_b_field)
-        self.dqx.set_gui_b_battle_ini(self.gui_b_battle_ini)
-        self.dqx.set_gui_b_battle_end(self.gui_b_battle_end)
-        self.dqx.field_mode(self.command)
+        if self.command == 'slot':
+            self.dqx.slot_mode()
+        else:
+            self.dqx.set_gui_b_field(self.gui_b_field)
+            self.dqx.set_gui_b_battle_ini(self.gui_b_battle_ini)
+            self.dqx.set_gui_b_battle_end(self.gui_b_battle_end)
+            self.dqx.field_mode(self.command)
         self.queue.put('Task finished')
 
 class StdoutRedirector(object):

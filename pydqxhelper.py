@@ -32,6 +32,10 @@ class DQXHelper():
         self.tbl['Chest']    = (self.img('chest.png'),    (  0, 100,   0, 150), ( 63,  46), 0.5) # たからばこ
         self.tbl['Person']   = (self.img('person.png'),   (  0, 100, 200, 400), ( 63, 243), 0.5) # 対人メニュー
         self.tbl['YesNo']    = (self.img('yesno.png'),    (300, 400, 400, 640), (325, 499), 0.5) # はい・いいえ
+        self.tbl['SlotK']    = (self.img('slotk.png'),    (400, 500,   0, 150), (418,  55), 0.5) # スロット(かけきん)
+        self.tbl['SlotM1']   = (self.img('slotm.png'),    (350, 450,   0, 640), (395,  50), 0.2) # スロット(メニュー1)
+        self.tbl['SlotM2']   = (self.img('slotm.png'),    (350, 450,   0, 640), (395, 100), 0.2) # スロット(メニュー2)
+        self.tbl['SlotM3']   = (self.img('slotm.png'),    (350, 450,   0, 640), (395,  66), 0.2) # スロット(メニュー3)
         self.debug = debug
         # GUI指定オプション
         self.gui_b_loop = True
@@ -95,6 +99,8 @@ class DQXHelper():
             cv2.imwrite(tmpdir + 'chest.png', img_proc[63:83, 46:143])
             cv2.imwrite(tmpdir + 'person.png', img_proc[63:84, 243:318])
             cv2.imwrite(tmpdir + 'yesno.png', img_proc[325:371, 499:560])
+            cv2.imwrite(tmpdir + 'slot1.png', img_proc[418:435, 55:110])
+            cv2.imwrite(tmpdir + 'slot2.png', img_proc[395:403, 50:490]) # 上下位置は3パターンある
             print 'Saved',
         return img_proc
 
@@ -289,6 +295,35 @@ class DQXHelper():
             # アイドル時間
             sleep(0.5)
 
+    """ スロットモード """
+    def slot_mode(self):
+        print 'Slot Mode'
+        while self.gui_b_loop:
+            # ゲーム画面がアクティブ
+            if GetWindowText(GetForegroundWindow()).decode('SJIS').startswith(u'ドラゴンクエスト'):
+                # 画像処理
+                img_orig = self.capture()
+                if img_orig is None:
+                    print 'ERROR: Capture Failed.'
+                    sleep(0.5)
+                    continue
+                img_proc = self.transform(img_orig)
+                # 分岐
+                if self.find_match(img_proc, 'SlotK'):
+                    SendKeys('{ENTER}')
+                    print 'SlotK(ENTER)'
+                elif self.find_match(img_proc, 'SlotM1') or self.find_match(img_proc, 'SlotM2') or self.find_match(img_proc, 'SlotM3'):
+                    SendKeys('{ENTER}')
+                    print 'SlotM(ENTER)'
+                else:
+                    # することがないので何もしない
+                    print 'x',
+            else:
+                # ゲーム画面が非アクティブなので何もしない
+                print '.',
+            # アイドル時間
+            sleep(0.5)
+
     """ ループ停止・再開 """
     def set_gui_b_loop(self, val):
         self.gui_b_loop = val
@@ -320,6 +355,9 @@ class DQXHelper():
         elif args[0] in ['attack', 'spell', 'tokugi']:
             # 「こうげき」「じゅもん」「とくぎ」でフィールドモード
             self.field_mode(args[0])
+        elif args[0] == 'slot':
+            # スロットゲームモード
+            self.slot_mode()
         elif args[0] == 'debug':
             # debugサブディレクトリ以下すべて読み込み
             print 'DEBUG: Reading all files'
