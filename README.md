@@ -41,7 +41,7 @@ pydqxhelper.py
 スクリプト単体でも動きます。
 
 ```
-> python pydqxhelper.py [attack|spell|tokugi]
+> python pydqxhelper.py [attack|spell|tokugi|slot]
    - attack： フィールドモード（こうげきリピート）
    - spell ： フィールドモード（じゅもんリピート）
               起動前に実行した「じゅもん」をリピート
