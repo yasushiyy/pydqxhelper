@@ -5,13 +5,9 @@ import os
 import sys
 import cv2
 import numpy as np
+import win32gui
 from PIL import ImageGrab
 from time import sleep
-from random import randint
-from win32api import keybd_event
-from win32con import KEYEVENTF_KEYUP, VK_MENU, VK_SNAPSHOT
-from win32gui import GetWindowText, GetForegroundWindow
-from win32clipboard import OpenClipboard, CloseClipboard, EmptyClipboard
 from pywinauto.SendKeysCtypes import SendKeys # SendInput対応
 
 class DQXHelper():
@@ -51,30 +47,12 @@ class DQXHelper():
 
     """ スクリーンショットのキャプチャ """
     def capture(self):
-        # 前回のキャプチャをクリア
-        OpenClipboard()
-        EmptyClipboard()
-        CloseClipboard()
-        # Alt+PrintScreen (高速化のため直接イベント送信)
-        keybd_event(VK_MENU, 0, 0, 0)
-        keybd_event(VK_SNAPSHOT, 0, 0, 0)
-        keybd_event(VK_SNAPSHOT, 0, KEYEVENTF_KEYUP, 0)
-        keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0)
-        img_capt = None
-        img_capt_count = 0
-        while not img_capt:
-            img_capt = ImageGrab.grabclipboard()
-            img_capt_count = img_capt_count + 1
-            if img_capt_count > 10:
-                # capture failed
-                img_capt = None
-                break
-            sleep(0.05)
+        hwnd = win32gui.GetForegroundWindow()
+        bbox = win32gui.GetWindowRect(hwnd)
+        img_capt = ImageGrab.grab(bbox)
         if img_capt:
-            img_orig = np.array(img_capt)[:, :, ::-1]  # RGB->BGR
-        else:
-            img_orig = None
-        return img_orig
+            return np.array(img_capt)[:, :, ::-1]  # RGB->BGR
+        return None
 
     """ グレースケール化、平滑化、二値化 """
     def transform(self, img_orig):
@@ -183,7 +161,7 @@ class DQXHelper():
         count5 = 5
         while self.gui_b_loop:
             # ゲーム画面がアクティブ
-            if GetWindowText(GetForegroundWindow()).decode('SJIS').startswith(u'ドラゴンクエスト'):
+            if win32gui.GetWindowText(win32gui.GetForegroundWindow()).decode('SJIS').startswith(u'ドラゴンクエスト'):
                 # 5回毎にカメラリセット
                 count5 = count5 - 1
                 if count5 == 0:
@@ -300,7 +278,7 @@ class DQXHelper():
         print 'Slot Mode'
         while self.gui_b_loop:
             # ゲーム画面がアクティブ
-            if GetWindowText(GetForegroundWindow()).decode('SJIS').startswith(u'ドラゴンクエスト'):
+            if win32gui.GetWindowText(win32gui.GetForegroundWindow()).decode('SJIS').startswith(u'ドラゴンクエスト'):
                 # 画像処理
                 img_orig = self.capture()
                 if img_orig is None:
